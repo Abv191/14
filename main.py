@@ -1,16 +1,18 @@
-from collections import UserDict
 from datetime import datetime
+from collections import UserDict
 
 
 class Field:
     def __init__(self, value):
-        self.set_value(value)
-
-    def set_value(self, value):
         self.value = value
 
-    def get_value(self):
-        return self.value
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
 
     def __str__(self):
         return str(self.value)
@@ -21,22 +23,21 @@ class Name(Field):
 
 
 class Phone(Field):
-    def set_value(self, value):
+    @Field.value.setter
+    def value(self, value):
         if not isinstance(value, str) or len(value) != 10 or not value.isdigit():
             raise ValueError("Phone number must contain exactly 10 digits.")
-        self.value = value
+        self._value = value
 
 
 class Birthday(Field):
-    def set_value(self, value):
+    @Field.value.setter
+    def value(self, value):
         try:
             datetime.strptime(value, '%Y-%m-%d')
-            self.value = value
+            self._value = value
         except ValueError:
             raise ValueError("Invalid birthday format. Use YYYY-MM-DD.")
-
-    def get_value(self):
-        return self.value
 
     def days_to_birthday(self):
         if not self.value:
@@ -72,15 +73,6 @@ class Record:
     def find_phone(self, phone):
         return next((p for p in self.phones if str(p) == str(phone)), None)
 
-    def set_birthday(self, birthday):
-        self.birthday = Birthday(birthday)
-
-    def get_birthday(self):
-        return self.birthday.get_value() if self.birthday else None
-
-    def days_to_birthday(self):
-        return self.birthday.days_to_birthday() if self.birthday else None
-
     def __str__(self):
         return f"Contact name: {self.name.value}, phones: {'; '.join(str(p) for p in self.phones)}, birthday: {self.birthday}"
 
@@ -103,5 +95,3 @@ class AddressBook(UserDict):
         items = list(self.data.values())
         for i in range(0, len(items), n):
             yield items[i:i + n]
-
-
