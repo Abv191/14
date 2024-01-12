@@ -2,7 +2,6 @@ from collections import UserDict
 from datetime import datetime
 
 
-
 class Field:
     def __init__(self, value):
         self.value = value
@@ -28,7 +27,7 @@ class Phone(Field):
     def value(self, value):
         if not isinstance(value, str) or len(value) != 10 or not value.isdigit():
             raise ValueError("Phone number must contain exactly 10 digits.")
-        self._value = value
+        super(Phone, type(self)).value.__set__(self, value)
 
 
 class Birthday(Field):
@@ -36,7 +35,7 @@ class Birthday(Field):
     def value(self, value):
         try:
             datetime.strptime(value, '%Y-%m-%d')
-            self._value = value
+            super(Birthday, type(self)).value.__set__(self, value)
         except ValueError:
             raise ValueError("Invalid birthday format. Use YYYY-MM-DD.")
 
