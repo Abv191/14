@@ -27,7 +27,7 @@ class Phone(Field):
     def value(self, value):
         if not isinstance(value, str) or len(value) != 10 or not value.isdigit():
             raise ValueError("Phone number must contain exactly 10 digits.")
-        super(Phone, type(self)).value.__set__(self, value)
+        self._value = value  # corrected line
 
 
 class Birthday(Field):
@@ -35,7 +35,7 @@ class Birthday(Field):
     def value(self, value):
         try:
             datetime.strptime(value, '%Y-%m-%d')
-            super(Birthday, type(self)).value.__set__(self, value)
+            self._value = value  # corrected line
         except ValueError:
             raise ValueError("Invalid birthday format. Use YYYY-MM-DD.")
 
