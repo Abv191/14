@@ -1,20 +1,21 @@
 from collections import UserDict
-from datetime import datetime, timedelta
+from datetime import datetime
+
 
 class Field:
     def __init__(self, value):
-        self._value = value
+        self.__value = value
 
     @property
     def value(self):
-        return self._value
+        return self.__value
 
     @value.setter
     def value(self, new_value):
-        self._value = new_value
+        self.__value = new_value
 
     def __str__(self):
-        return str(self._value)
+        return str(self.__value)
 
 class Name(Field):
     pass
@@ -25,12 +26,12 @@ class Phone(Field):
         self.validate_phone()
 
     def validate_phone(self):
-        if not isinstance(self._value, str) or len(self._value) != 10 or not self._value.isdigit():
+        if not isinstance(self.__value, str) or len(self.__value) != 10 or not self.__value.isdigit():
             raise ValueError("Phone number must contain exactly 10 digits.")
 
     @Field.value.setter
     def value(self, new_value):
-        self._value = new_value
+        self.__value = new_value
         self.validate_phone()
 
 class Birthday(Field):
@@ -39,13 +40,18 @@ class Birthday(Field):
 
     @Field.value.setter
     def value(self, new_value):
-        self._value = new_value
+        self.__value = new_value
+
+    def validate_date(self):
+        if not isinstance(self.__value, datetime):
+            raise ValueError("Birthday must be a datetime object.")
 
 class Record:
     def __init__(self, name, birthday=None):
         self.name = Name(name)
         self.phones = []
         self.birthday = Birthday(birthday)
+        self.birthday.validate_date()
 
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
