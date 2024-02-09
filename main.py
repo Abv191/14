@@ -17,8 +17,10 @@ class Field:
     def __str__(self):
         return str(self.__value)
 
+
 class Name(Field):
     pass
+
 
 class Phone(Field):
     def __init__(self, value):
@@ -26,32 +28,34 @@ class Phone(Field):
         self.validate_phone()
 
     def validate_phone(self):
-        if not isinstance(self.__value, str) or len(self.__value) != 10 or not self.__value.isdigit():
+        if not isinstance(self.value, str) or len(self.value) != 10 or not self.value.isdigit():
             raise ValueError("Phone number must contain exactly 10 digits.")
 
     @Field.value.setter
     def value(self, new_value):
-        self.__value = new_value
+        super().value(new_value)
         self.validate_phone()
+
 
 class Birthday(Field):
     def __init__(self, value=None):
         super().__init__(value)
 
+    def validate_date(self):
+        if not isinstance(self.value, datetime):
+            raise ValueError("Birthday must be a datetime object.")
+
     @Field.value.setter
     def value(self, new_value):
-        self.__value = new_value
+        super().value(new_value)
+        self.validate_date()
 
-    def validate_date(self):
-        if not isinstance(self.__value, datetime):
-            raise ValueError("Birthday must be a datetime object.")
 
 class Record:
     def __init__(self, name, birthday=None):
         self.name = Name(name)
         self.phones = []
         self.birthday = Birthday(birthday)
-        self.birthday.validate_date()
 
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
@@ -62,9 +66,7 @@ class Record:
     def edit_phone(self, old_phone, new_phone):
         if not self.find_phone(old_phone):
             raise ValueError("Old phone number not found.")
-
         self.remove_phone(old_phone)
-
         self.add_phone(new_phone)
 
     def find_phone(self, phone):
@@ -81,6 +83,7 @@ class Record:
 
     def __str__(self):
         return f"Contact name: {self.name.value}, phones: {'; '.join(str(p) for p in self.phones)}, birthday: {self.birthday.value}"
+
 
 class AddressBook(UserDict):
     def add_record(self, record):
