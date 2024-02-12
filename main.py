@@ -24,31 +24,32 @@ class Name(Field):
 
 class Phone(Field):
     def __init__(self, value):
+        self.validate_phone(value)
         super().__init__(value)
-        self.validate_phone()
 
-    def validate_phone(self):
-        if not isinstance(self.value, str) or len(self.value) != 10 or not self.value.isdigit():
+    def validate_phone(self, value):
+        if not isinstance(value, str) or len(value) != 10 or not value.isdigit():
             raise ValueError("Phone number must contain exactly 10 digits.")
 
     @Field.value.setter
     def value(self, new_value):
+        self.validate_phone(new_value)
         super().value(new_value)
-        self.validate_phone()
 
 
 class Birthday(Field):
     def __init__(self, value=None):
+        self.validate_date(value)
         super().__init__(value)
 
-    def validate_date(self):
-        if not isinstance(self.value, datetime):
+    def validate_date(self, value):
+        if value is not None and not isinstance(value, datetime):
             raise ValueError("Birthday must be a datetime object.")
 
     @Field.value.setter
     def value(self, new_value):
+        self.validate_date(new_value)
         super().value(new_value)
-        self.validate_date()
 
 
 class Record:
