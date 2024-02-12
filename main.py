@@ -1,6 +1,7 @@
 import pickle
-from collections import UserDict
 from datetime import datetime
+from collections import UserDict
+
 
 
 class Field:
@@ -88,54 +89,123 @@ class Record:
 
 
 class AddressBook(UserDict):
+    def __init__(self, filename='address_book.pkl'):
+        self.filename = filename
+        self.load()
+
+    def load(self):
+        try:
+            with open(self.filename, 'rb') as f:
+                self.data = pickle.load(f)
+        except FileNotFoundError:
+            self.data = {}
+
+    def save(self):
+        with open(self.filename, 'wb') as f:
+            pickle.dump(self.data, f)
+
     def add_record(self, record):
         self.data[record.name.value] = record
-
-    def find(self, name):
-        return self.data.get(name, None)
 
     def delete(self, name):
         if name in self.data:
             del self.data[name]
 
-    def iterator(self, N):
-        records = list(self.data.values())
-        for i in range(0, len(records), N):
-            yield records[i:i+N]
+    def search(self, query):
+        found_records = []
+        for record in self.values():
+            if query.lower() in record.name.value.lower():
+                found_records.append(record)
+            for phone in record.phones:
+                if query in phone.value:
+                    found_records.append(record)
+                    break
+        return found_records
 
-    def save_to_file(self, filename):
-        with open(filename, 'wb') as f:
-            pickle.dump(self.data, f)
+    def find(self, name):
+        return self.data.get(name, None)
 
-    @classmethod
-    def load_from_file(cls, filename):
-        address_book = cls()
+    def __enter__(self):
+        self.load()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.save()
+
+
+def add_record_handler(address_book):
+    name = input("Enter the contact's name: ")
+    birthday_input = input("Enter the contact's birthday (YYYY-MM-DD), leave blank if unknown: ")
+    try:
+        birthday = datetime.strptime(birthday_input, "%Y-%m-%d").date()
+    except ValueError:
+        birthday = None
+    record = Record(name, birthday)
+    while True:
+        phone = input("Enter a phone number for the contact (10 digits): ")
         try:
-            with open(filename, 'rb') as f:
-                address_book.data = pickle.load(f)
-        except FileNotFoundError:
-            # If file doesn't exist, return an empty address book
-            pass
-        return address_book
+            record.add_phone(phone)
+        except ValueError as e:
+            print(e)
+        choice = input("Do you want to add another phone number? (yes/no): ")
+        if choice.lower() != 'yes':
+            break
+    address_book.add_record(record)
+    print("Contact added successfully.")
 
 
-# Example usage:
+def delete_record_handler(address_book):
+    query = input("Enter the name or phone number of the contact you want to delete: ")
+    found_records = address_book.search(query)
+    if not found_records:
+        print("No matching contacts found.")
+        return
+    print("Found matching contacts:")
+    for i, record in enumerate(found_records, 1):
+        print(f"{i}. {record}")
+    choice = input("Enter the number of the contact you want to delete: ")
+    try:
+        index = int(choice) - 1
+        if 0 <= index < len(found_records):
+            address_book.delete_record(found_records[index])
+            print("Contact deleted successfully.")
+        else:
+            print("Invalid choice.")
+    except ValueError:
+        print("Invalid choice.")
+
+
+def search_handler(address_book):
+    query = input("Enter the name or phone number you want to search for: ")
+    found_records = address_book.search(query)
+    if not found_records:
+        print("No matching contacts found.")
+    else:
+        print("Matching contacts:")
+        for record in found_records:
+            print(record)
+
+
+def main():
+    with AddressBook() as address_book:
+        while True:
+            print("\nAddress Book Menu:")
+            print("1. Add a new contact")
+            print("2. Delete a contact")
+            print("3. Search for a contact")
+            print("4. Exit")
+            choice = input("Enter your choice: ")
+            if choice == '1':
+                add_record_handler(address_book)
+            elif choice == '2':
+                delete_record_handler(address_book)
+            elif choice == '3':
+                search_handler(address_book)
+            elif choice == '4':
+                print("Exiting...")
+                break
+            else:
+                print("Invalid choice. Please enter a number between 1 and 4.")
+
 if __name__ == "__main__":
-    # Creating an address book
-    address_book = AddressBook()
-    record1 = Record("John Doe", datetime(1990, 5, 15))
-    record1.add_phone("1234567890")
-    record1.add_phone("0987654321")
-    record2 = Record("Jane Smith", datetime(1985, 10, 20))
-    record2.add_phone("9876543210")
-    address_book.add_record(record1)
-    address_book.add_record(record2)
-
-    # Saving the address book to a file
-    address_book.save_to_file('address_book.pkl')
-
-    # Loading the address book from a file
-    loaded_address_book = AddressBook.load_from_file('address_book.pkl')
-    print("Loaded address book:")
-    for record in loaded_address_book.values():
-        print(record)
+    main()
