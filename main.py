@@ -1,3 +1,4 @@
+import pickle
 from collections import UserDict
 from datetime import datetime
 
@@ -101,3 +102,40 @@ class AddressBook(UserDict):
         records = list(self.data.values())
         for i in range(0, len(records), N):
             yield records[i:i+N]
+
+    def save_to_file(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self.data, f)
+
+    @classmethod
+    def load_from_file(cls, filename):
+        address_book = cls()
+        try:
+            with open(filename, 'rb') as f:
+                address_book.data = pickle.load(f)
+        except FileNotFoundError:
+            # If file doesn't exist, return an empty address book
+            pass
+        return address_book
+
+
+# Example usage:
+if __name__ == "__main__":
+    # Creating an address book
+    address_book = AddressBook()
+    record1 = Record("John Doe", datetime(1990, 5, 15))
+    record1.add_phone("1234567890")
+    record1.add_phone("0987654321")
+    record2 = Record("Jane Smith", datetime(1985, 10, 20))
+    record2.add_phone("9876543210")
+    address_book.add_record(record1)
+    address_book.add_record(record2)
+
+    # Saving the address book to a file
+    address_book.save_to_file('address_book.pkl')
+
+    # Loading the address book from a file
+    loaded_address_book = AddressBook.load_from_file('address_book.pkl')
+    print("Loaded address book:")
+    for record in loaded_address_book.values():
+        print(record)
